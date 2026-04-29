@@ -40,7 +40,7 @@ class ArtWorkController extends Controller
                 'data' => [
                     'price' => $selectedTier['price']
                 ],
-                'error' => false
+                'error' => null
             ]);
         } catch (\Exception $e) {
 
