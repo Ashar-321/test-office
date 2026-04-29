@@ -30,7 +30,11 @@ class ArtWorkController extends Controller
             }
 
             usort($arrayTiers, function ($a, $b) {
-                return $b['min'] <=> $a['min'];
+                if ($b['min'] !== $a['min']) {
+                    return $b['min'] <=> $a['min'];
+                }
+
+                return $a['price'] <=> $b['price'];
             });
 
             $selectedTier = $arrayTiers[0];
@@ -47,7 +51,7 @@ class ArtWorkController extends Controller
             return response()->json([
                 'success' => false,
                 'data' => null,
-                'error' => true
+                'error' => null
             ]);
            
         }
