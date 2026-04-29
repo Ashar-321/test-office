@@ -9,6 +9,6 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::post('/exercise-2−tier-pricing', [ArtWorkController::class, 'index']);
-Route::post('/exercise-1−artwork-version', [ArtWorkController::class, 'exercise1']);
-Route::post('/exercise-3−cart-validator', [ArtWorkController::class, 'exercise3']);
+Route::post('/exercise-2-tier-pricing', [ArtWorkController::class, 'index']);
+Route::post('/exercise-1-artwork-version', [ArtWorkController::class, 'exercise1']);
+Route::post('/exercise-3-cart-validator', [ArtWorkController::class, 'exercise3']);
