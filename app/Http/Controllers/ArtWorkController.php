@@ -156,7 +156,7 @@ class ArtWorkController extends Controller
             return response()->json([
                 'success' => false,
                 'data' => null,
-                'error' => $e->getMessage()
+                'error' => null
             ], 500);
         }
     }
