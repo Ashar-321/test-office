@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ArtWorkController extends Controller
 {
@@ -163,26 +164,80 @@ class ArtWorkController extends Controller
 
     public function exercise4(Request $request)
     {
-        try{
+        try {
+            $validated = $request->validate([
+                'input.order_qty' => 'required|integer|min:1',
+                'input.vendors' => 'required|array|min:1',
+                'input.vendors.*.id' => 'required|integer',
+                'input.vendors.*.stock' => 'required|integer|min:0'
+            ]);
 
-        
-        $request->validate([
-            'input.order_qty' => 'required|integer|min:1',
-            'input.vendors' => 'required|array|min:1',
-            'input.vendors.*.id' => 'required|integer',
-            'input.vendors.*.stock' => 'required|integer|min:0'
-        ]);
+            $orderQty = $validated['input']['order_qty'];
+            $vendors = $validated['input']['vendors'];
 
-        $orderQty = $request->input('input.order_qty');
-        $vendors = $request->input('input.vendors');
-        }
-        catch(\Exception $e){
+            $totalStock = array_sum(array_column($vendors, 'stock'));
+
+            if ($totalStock < $orderQty) {
+                return response()->json([
+                    'success' => false,
+                    'data' => [],
+                    'error' => 'Insufficient total stock from vendors'
+                ], 400);
+            }
+
+            $remainingQty = $orderQty;
+            $allocation = [];
+
+            foreach ($vendors as $vendor) {
+
+                if ($remainingQty <= 0) {
+                    break;
+                }
+
+                if ($vendor['stock'] <= 0) {
+                    continue;
+                }
+
+                $allocated = min($vendor['stock'], $remainingQty);
+
+                $allocation[] = [
+                    'vendor_id' => $vendor['id'],
+                    'allocated' => $allocated
+                ];
+
+                $remainingQty -= $allocated;
+            }
+
+            if ($remainingQty > 0) {
+                return response()->json([
+                    'success' => false,
+                    'data' => [],
+                    'error' => 'Allocation failed'
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $allocation,
+                'error' => null
+            ], 200);
+
+        } catch (ValidationException $e) {
+
             return response()->json([
                 'success' => false,
-                'data' => null,
+                'data' => [],
+                'error' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'data' => [],
                 'error' => $e->getMessage()
             ], 500);
-    }
+        }
     }
 
 }
