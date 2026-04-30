@@ -117,8 +117,7 @@ class ArtWorkController extends Controller
 
     public function exercise3(Request $request)
     {
-
-         try{
+        try {
            $request->validate([
                 'input' => 'required|array|min:1',
                 'input.*.id' => 'required',
@@ -127,32 +126,55 @@ class ArtWorkController extends Controller
             ]);
 
             $input = $request->input('input');
-             
+
             $invalid_ids = [];
+
+
+            $input = $request->input('input');
+
+            $invalid_ids = [];
+
             foreach ($input as $item) {
-                if ($item['required'] == true && $item['done'] == false) {
+                $required = isset($item['required']) ? (bool)$item['required'] : false;
+                $done = isset($item['done']) ? (bool)$item['done'] : false;
+
+                if ($required && !$done) {
                     $invalid_ids[] = $item['id'];
                 }
-            }
-
-            if (!empty($invalid_ids)) {
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'valid' => false,
-                        'invalid_items' => $invalid_ids
-                    ],
-                    'error' => null
-                ]);
             }
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'valid' => true
+                    'valid' => empty($invalid_ids),
+                    'invalid_items' => $invalid_ids
                 ],
                 'error' => null
-            ]);
+            ], 200);
+
+        } catch(\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function exercise4(Request $request)
+    {
+        try{
+
+        
+        $request->validate([
+            'input.order_qty' => 'required|integer|min:1',
+            'input.vendors' => 'required|array|min:1',
+            'input.vendors.*.id' => 'required|integer',
+            'input.vendors.*.stock' => 'required|integer|min:0'
+        ]);
+
+        $orderQty = $request->input('input.order_qty');
+        $vendors = $request->input('input.vendors');
         }
         catch(\Exception $e){
             return response()->json([
@@ -160,8 +182,7 @@ class ArtWorkController extends Controller
                 'data' => null,
                 'error' => $e->getMessage()
             ], 500);
-        }
-        
+    }
     }
 
 }
