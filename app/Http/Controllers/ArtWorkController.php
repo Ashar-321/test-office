@@ -240,4 +240,245 @@ class ArtWorkController extends Controller
         }
     }
 
+    public function exercise5(Request $request)
+    {
+        try {
+
+            $validated = $request->validate([
+                'input.price' => 'required|numeric|min:0',
+                'input.discounts' => 'required|array|min:1',
+                'input.discounts.*.type' => 'required|in:percentage,flat',
+                'input.discounts.*.value' => 'required|numeric|min:0',
+            ], [
+                'input.price.min' => 'Price cannot be negative.',
+                'input.price.numeric' => 'Price must be a valid number.',
+            ]);
+
+            $price = (float) $validated['input']['price'];
+            $discounts = $validated['input']['discounts'];
+
+            if ($price < 0) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'error' => [
+                        'message' => 'Price cannot be negative.',
+                    ]
+                ], 422);
+            }
+
+            $bestPrice = $price;
+
+            foreach ($discounts as $discount) {
+                $type = strtolower($discount['type']);
+                $value = (float) $discount['value'];
+
+                $finalPrice = $price;
+
+                if ($type === 'percentage') {
+                    $finalPrice = $price * (1 - $value / 100);
+                } elseif ($type === 'flat') {
+                    $finalPrice = $price - $value;
+                }
+
+                if ($finalPrice < $bestPrice) {
+                    $bestPrice = $finalPrice;
+                }
+            }
+
+            $bestPrice = max(0, round($bestPrice, 2));
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'final_price' => $bestPrice,
+                ],
+                'error' => null
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => [
+                    'message' => 'Validation failed',
+                    'details' => $e->errors()
+                ]
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => [
+                    'message' => 'Something went wrong while calculating discount.',
+                    'details' => config('app.debug') ? $e->getMessage() : null
+                ]
+            ], 500);
+        }
+        
+    }
+
+    // public function exercise6(Request $request)
+    // {
+    //     try{
+
+    //         $validate = $request->validate([
+    //             'input' => 'required|array|min:1',
+    //             'input.steps' => 'required|array|min:1',
+    //             'input.steps.*.id' => 'required|string',
+    //             'input.steps.*.depends_on' => 'nullable|string'
+    //         ]);
+
+    //         $steps = $validate['input']['steps'];
+    //         $stepMap = [];
+
+    //         foreach ($steps as $step) {
+    //             $stepMap[$step['id']] = $step['depends_on'];
+    //         }
+    //         $visited = [];
+    //         $result = [];
+    //         foreach ($stepMap as $id => $dependsOn) {
+    //             if (!isset($visited[$id])) {
+    //                 $stack = [];
+    //                 $current = $id;
+
+    //                 while ($current !== null) {
+    //                     if (isset($visited[$current])) {
+    //                         break;
+    //                     }
+    //                     if (in_array($current, $stack)) {
+    //                         return response()->json([
+    //                             'success' => false,
+    //                             'data' => null,
+    //                             'error' => 'Circular dependency detected'
+    //                         ], 400);
+    //                     }
+    //                     $stack[] = $current;
+    //                     $current = $stepMap[$current] ?? null;
+    //                 }
+
+    //                 foreach (array_reverse($stack) as $stepId) {
+    //                     if (!isset($visited[$stepId])) {
+    //                         $result[] = $stepId;
+    //                         $visited[$stepId] = true;
+    //                     }
+    //                 }
+
+    //                 return response()->json([
+    //                     'success' => true,
+    //                     'data' => json_encode(['valid' => $result, JSON_PRETTY_PRINT]),
+    //                     'error' => null
+    //                 ], 200);
+    //             }
+    //         }
+    //     }
+    //     catch(\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'data' => null,
+    //             'error' => $e->getMessage()
+    //         ], 422);
+    //     }
+        
+    // }
+
+    public function exercise6(Request $request)
+    {
+        try {
+        $request->validate([
+            'input' => 'required|array|min:1',
+            'input.steps' => 'required|array|min:1',
+            'input.steps.*.id' => 'required|string',
+            'input.steps.*.depends_on' => 'nullable|string',
+        ], [
+            'input.steps.*.id.required' => 'Each step must have an id.',
+            'input.steps.*.id.string' => 'Each step id must be a string.',
+            'input.steps.*.depends_on.string' => 'Each step dependency must be a string or null.',
+        ]
+        );
+
+        $steps = $request->input('input.steps');
+
+        $result = $this->validateApprovalFlow($steps);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'valid' => $result['valid']
+            ],
+            'error' => $result['error']
+        ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    private function validateApprovalFlow(array $steps): array
+    {
+        $stepMap = [];
+        $graph = [];
+        $in = [];
+
+        foreach ($steps as $step) {
+            $id = $step['id'];
+            $dependsOn = $step['depends_on'] ?? null;
+
+            $stepMap[$id] = true;
+            $graph[$id] = $dependsOn;
+
+            if (!isset($in[$id])) {
+                $in[$id] = 0;
+            }
+        }
+
+        foreach ($graph as $id => $dependsOn) {
+            if ($dependsOn !== null) {
+                if (!isset($stepMap[$dependsOn])) {
+                    return [
+                        'valid' => false,
+                        'error' => "Missing dependency: Step '{$id}' depends on non-existent step '{$dependsOn}'"
+                    ];
+                }
+                $in[$dependsOn] = ($in[$dependsOn] ?? 0) + 1;
+            }
+        }
+
+        $queue = [];
+        foreach ($in as $id => $degree) {
+            if ($degree === 0) {
+                $queue[] = $id;
+            }
+        }
+
+        $processed = 0;
+        while (!empty($queue)) {
+            $current = array_shift($queue);
+            $processed++;
+
+            $parent = $graph[$current] ?? null;
+            if ($parent !== null) {
+                $in[$parent]--;
+                if ($in[$parent] === 0) {
+                    $queue[] = $parent;
+                }
+            }
+        }
+
+        if ($processed !== count($steps)) {
+            return [
+                'valid' => false,
+                'error' => 'Disconnected'
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'error' => null
+        ];
+    }
 }
