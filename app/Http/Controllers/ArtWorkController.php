@@ -481,4 +481,62 @@ class ArtWorkController extends Controller
             'error' => null
         ];
     }
+
+    public function exercise7(Request $request)
+    {
+        try {
+            $request->validate([
+                'input.stock'     => 'required|integer|min:0',
+                'input.requests'  => 'required|array|min:1',
+                'input.requests.*' => 'integer',
+            ], [
+                'input.stock.required'    => 'Stock quantity is required.',
+                'input.stock.integer'     => 'Stock must be a valid integer.',
+                'input.stock.min'         => 'Stock cannot be negative.',
+                'input.requests.required' => 'Requests array is required.',
+                'input.requests.array'    => 'Requests must be an array.',
+                'input.requests.min'      => 'At least one reservation request is required.',
+            ]);
+
+            $input = $request->input('input');
+            $stock = (int) $input['stock'];
+            $requests = $input['requests'];
+
+            $remainingStock = $stock;
+            $results = [];
+
+            foreach ($requests as $req) {
+                $amount = (int) $req;
+
+                if ($amount > 0 && $amount <= $remainingStock) {
+                    $results[] = true;
+                    $remainingStock -= $amount;
+                } else {
+                    $results[] = false;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data'    => $results,
+                'error'   => null
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'An unexpected error occurred.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
