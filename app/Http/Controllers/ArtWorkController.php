@@ -539,4 +539,58 @@ class ArtWorkController extends Controller
             ], 500);
         }
     }
+
+    public function exercise8(Request $request)
+    {
+        try
+        {
+            $validated = $request->validate([
+                'input.ordered' => 'required|integer|min:1',
+                'input.shipped' => 'required|array|min:1',
+                'input.shipped.*' => 'integer|min:0'
+            ], [
+                'input.ordered.required' => 'Ordered quantity is required.',
+                'input.ordered.integer' => 'Ordered quantity must be an integer.',
+                'input.ordered.min' => 'Ordered quantity must be at least 1.',
+                'input.shipped.required' => 'Shipped array is required.',
+                'input.shipped.array' => 'Shipped must be an array.',
+                'input.shipped.min' => 'At least one shipped entry is required.',
+                'input.shipped.*.integer' => 'Each shipped quantity must be an integer.',
+                'input.shipped.*.min' => 'Shipped quantities cannot be negative.'
+            ]);
+
+            $ordered = $validated['input']['ordered'];
+            $shipped = $validated['input']['shipped'];
+
+            $shippedArray = array_sum($shipped);
+            $totalShipped = $ordered - $shippedArray;
+            $remaining = max(0, $totalShipped);
+
+            return response()->json([
+                'success' => true,
+                'data'    => ['remaining' => $remaining],
+                'error'   => null
+            ], 200);
+
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+
+        }
+         catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'An unexpected error occurred.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+        
+    
 }

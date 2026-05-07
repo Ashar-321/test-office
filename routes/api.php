@@ -16,3 +16,4 @@ Route::post('/exercise-4-vendor-allocation', [ArtWorkController::class, 'exercis
 Route::post('/exercise-5-discount', [ArtWorkController::class, 'exercise5']);
 Route::post('/exercise-6-approval-flow', [ArtWorkController::class, 'exercise6']);
 Route::post('/exercise-7-inventory', [ArtWorkController::class, 'exercise7']);
+Route::post('/exercise-8-shipment', [ArtWorkController::class, 'exercise8']);
