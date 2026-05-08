@@ -591,6 +591,52 @@ class ArtWorkController extends Controller
             ], 500);
         }
     }
+
+    public function exercise9(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'input' => 'required|array|min:1',
+                'input.*.id' => 'required|string',
+                'input.*.time' => 'required|integer|min:1'
+            ], [
+                'input.required' => 'Input array is required.',
+                'input.array' => 'Input must be an array.',
+                'input.min' => 'At least one entry is required in the input array.',
+                'input.*.id.required' => 'Each entry must have an id.',
+                'input.*.id.string' => 'Each id must be a string.',
+                'input.*.time.required' => 'Each entry must have a time value.',
+                'input.*.time.integer' => 'Time value must be an integer.',
+                'input.*.time.min' => 'Time value must be at least 1.'
+            ]);
+
+            $input = $validated['input'];
+
+            $ids = collect($input)->pluck('id')->unique()->values();
+
+            return response()->json([
+                'success' => true,
+                'data'    => $ids,
+                'error'   => null
+            ], 200);
+
+        }
+        catch (\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'error' => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+        }
+        catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'An unexpected error occurred.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
         
-    
+    }
 }
