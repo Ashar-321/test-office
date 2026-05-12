@@ -18,3 +18,5 @@ Route::post('/exercise-6-approval-flow', [ArtWorkController::class, 'exercise6']
 Route::post('/exercise-7-inventory', [ArtWorkController::class, 'exercise7']);
 Route::post('/exercise-8-shipment', [ArtWorkController::class, 'exercise8']);
 Route::post('/exercise-9-webhook', [ArtWorkController::class, 'exercise9']);
+Route::post('/exercise-10-quote-expiry', [ArtWorkController::class, 'exercise10']);
+Route::post('/exercise-11-product-visibility', [ArtWorkController::class, 'exercise11']);

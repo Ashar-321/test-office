@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
+use Illuminate\Support\Facades\Validator;
 class ArtWorkController extends Controller
 {
     public function index(Request $request)
@@ -639,4 +639,121 @@ class ArtWorkController extends Controller
         }
         
     }
+
+    public function exercise10(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'input.created_at' => 'required|date',
+                'input.valid_days' => 'required|integer|min:1',
+                'input.current_date' => 'required|date'
+            ], [
+                'input.created_at.required' => 'Creation date is required.',
+                'input.created_at.date' => 'Creation date must be a valid date.',
+                'input.valid_days.required' => 'Valid days is required.',
+                'input.valid_days.integer' => 'Valid days must be an integer.',
+                'input.valid_days.min' => 'Valid days must be at least 1.',
+                'input.current_date.required' => 'Current date is required.',
+                'input.current_date.date' => 'Current date must be a valid date.'
+            ]);
+
+            $createdAt = new \DateTime($validated['input']['created_at']);
+            $validDays = (int) $validated['input']['valid_days'];
+            $currentDate = new \DateTime($validated['input']['current_date']);
+
+            $expiryDate = (clone $createdAt)->modify("+{$validDays} days");
+
+            $isExpired = $currentDate > $expiryDate;
+
+            return response()->json([
+                'success' => true,
+                'data'    => ['valid' => !$isExpired],
+                'error'   => null
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'An unexpected error occurred.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+        
+    }
+
+    public function exercise11(Request $request)
+    {
+        try{
+            $validated = $request->validate([
+                    'input' => 'required|array',
+                    'input.customer' => 'required|array',
+                    'input.customer.tags' => 'required|array',
+                    'input.customer.tags.*' => 'string',
+                    'input.products' => 'required|array',
+                    'input.products.*.id' => 'required|integer',
+                    'input.products.*.allow' => 'nullable|array',
+                    'input.products.*.allow.*' => 'string',
+                    'input.products.*.block' => 'nullable|array',
+                    'input.products.*.block.*' => 'string',
+                ]);
+
+                $customerTags = collect($validated['input']['customer']['tags']);
+                $products = $validated['input']['products'];
+
+                $visibleIds = [];
+
+                foreach ($products as $product) {
+                    $allowTags = collect($product['allow']);
+                    $blockTags = collect($product['block']);
+
+                    $isBlocked = $blockTags->intersect($customerTags)->isNotEmpty();
+                    if ($isBlocked) {
+                        continue;
+                    }
+                    $hasAccess = true;
+                    if ($allowTags->isNotEmpty()) {
+                        $hasAccess = $allowTags->intersect($customerTags)->isNotEmpty();
+                    }
+
+                    if ($hasAccess) {
+                        $visibleIds[] = $product['id'];
+                    }
+                }
+
+                return response()->json([
+                    "success" => true,
+                    'visible_product_ids' => $visibleIds,
+                    'count' => count($visibleIds),
+                    'error' => null
+
+                ], 200);
+        }
+        catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+
+        }
+        catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => 'An unexpected error occurred.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
