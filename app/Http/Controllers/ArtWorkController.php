@@ -731,8 +731,7 @@ class ArtWorkController extends Controller
 
                 return response()->json([
                     "success" => true,
-                    'visible_product_ids' => $visibleIds,
-                    'count' => count($visibleIds),
+                    'data' => $visibleIds,
                     'error' => null
 
                 ], 200);
