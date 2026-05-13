@@ -755,4 +755,54 @@ class ArtWorkController extends Controller
         }
     }
 
+    public function exercise12(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'input' => 'required|array',
+                'input.items' => 'required|array|min:1',
+                'input.items.*.id' => 'required|integer|min:1',
+                'input.items.*.price' => 'required|numeric|min:0',
+                'input.bundle_price' => 'required|numeric|min:0',
+                'input.apply_bundle' => 'required|boolean',
+            ]);
+
+            $data = $validated['input'];
+            $items = $data['items'];
+            $bundlePrice = $data['bundle_price'];
+            $applyBundle = $data['apply_bundle'];
+
+            $grandTotal = 0;
+            foreach ($items as $item) {
+                $grandTotal += $item['price'];
+            }
+
+            $finalPrice = $grandTotal;
+
+            if ($applyBundle && $bundlePrice < $grandTotal) {
+                $finalPrice = $bundlePrice;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => ['price' => $finalPrice],
+                'error' => null
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'An unexpected error occurred.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 }
