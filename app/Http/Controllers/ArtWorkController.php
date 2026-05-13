@@ -765,6 +765,19 @@ class ArtWorkController extends Controller
                 'input.items.*.price' => 'required|numeric|min:0',
                 'input.bundle_price' => 'required|numeric|min:0',
                 'input.apply_bundle' => 'required|boolean',
+            ],
+            [
+                'input.items.*.id.required' => 'Each item must have an id.',
+                'input.items.*.id.integer' => 'Each item id must be an integer.',
+                'input.items.*.id.min' => 'Each item id must be at least 1.',
+                'input.items.*.price.required' => 'Each item must have a price.',
+                'input.items.*.price.numeric' => 'Each item price must be a valid number.',
+                'input.items.*.price.min' => 'Each item price cannot be negative.',
+                'input.bundle_price.required' => 'Bundle price is required.',
+                'input.bundle_price.numeric' => 'Bundle price must be a valid number.',
+                'input.bundle_price.min' => 'Bundle price cannot be negative.',
+                'input.apply_bundle.required' => 'Apply bundle flag is required.',
+                'input.apply_bundle.boolean' => 'Apply bundle flag must be a boolean value.'
             ]);
 
             $data = $validated['input'];
