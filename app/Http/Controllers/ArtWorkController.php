@@ -898,7 +898,7 @@ class ArtWorkController extends Controller
                     if ($nums[$i] + $nums[$j] === $target) {
                         return response()->json([
                             'success' => true,
-                            'data'    => ['indices' => [$i, $j]],
+                            'data'    =>  [$i, $j],
                             'error'   => null
                         ], 200);
                     }
