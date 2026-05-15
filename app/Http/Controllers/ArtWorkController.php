@@ -877,6 +877,65 @@ class ArtWorkController extends Controller
         }
     }
 
+    public function exercise14(Request $request)
+    {
+    try {
+
+        $validated = $request->validate([
+            'input' => 'required|array',
+            'input.nums' => 'required|array|min:2',
+            'input.nums.*' => 'integer',
+            'input.target' => 'required|integer'
+        ], [
+            'input.required' => 'Input array is required.',
+            'input.array' => 'Input must be an array.',
+            'input.nums.required' => 'Nums array is required.',
+            'input.nums.array' => 'Nums must be an array.',
+            'input.nums.min' => 'At least two numbers are required in the nums array.',
+            'input.nums.*.integer' => 'Each number in nums must be an integer.',
+            'input.target.required' => 'Target number is required.',
+            'input.target.integer' => 'Target must be an integer.'
+        ]);
+
+        $nums = $validated['input']['nums'];
+        $target = $validated['input']['target'];
+
+        $arr = [];
+        foreach ($nums as $index => $num) {
+            $result = $target - $num;
+            if (isset($arr[$result])) {
+                return response()->json([
+                    'success' => true,
+                    'data' => ['indices' => [$arr[$result], $index]],
+                    'error' => null
+                ], 200);
+            }
+            $arr[$num] = $index;
+        }
+
+        return response()->json([
+            'success' => false,
+            'data' => null,
+            'error' => 'No two numbers sum up to the target.'
+        ], 404);
+
+    }
+    catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Validation failed',
+            'details' => $e->errors()
+        ], 422);
+
+        }
+        catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage()
+            ], 400);
+        }
+    }
+
 
 
 }

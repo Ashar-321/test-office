@@ -22,3 +22,4 @@ Route::post('/exercise-10-quote-expiry', [ArtWorkController::class, 'exercise10'
 Route::post('/exercise-11-product-visibility', [ArtWorkController::class, 'exercise11']);
 Route::post('/exercise-12-bundle-pricing', [ArtWorkController::class, 'exercise12']);
 Route::post('/exercise-13-cart-merge', [ArtWorkController::class, 'exercise13']);
+Route::post('/exercise-14-upsell', [ArtWorkController::class, 'exercise14']);
