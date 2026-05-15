@@ -879,63 +879,52 @@ class ArtWorkController extends Controller
 
     public function exercise14(Request $request)
     {
-    try {
+        try {
+            $validated = $request->validate([
+                'input.nums'    => 'required|array|min:2',
+                'input.nums.*'  => 'required|integer',
+                'input.target'  => 'required|integer',
+            ]);
 
-        $validated = $request->validate([
-            'input' => 'required|array',
-            'input.nums' => 'required|array|min:2',
-            'input.nums.*' => 'integer',
-            'input.target' => 'required|integer'
-        ], [
-            'input.required' => 'Input array is required.',
-            'input.array' => 'Input must be an array.',
-            'input.nums.required' => 'Nums array is required.',
-            'input.nums.array' => 'Nums must be an array.',
-            'input.nums.min' => 'At least two numbers are required in the nums array.',
-            'input.nums.*.integer' => 'Each number in nums must be an integer.',
-            'input.target.required' => 'Target number is required.',
-            'input.target.integer' => 'Target must be an integer.'
-        ]);
+            $nums   = $validated['input']['nums'];
+            $target = $validated['input']['target'];
 
-        $nums = $validated['input']['nums'];
-        $target = $validated['input']['target'];
+            $total = count($nums);
 
-        $arr = [];
-        foreach ($nums as $index => $num) {
-            $result = $target - $num;
-            if (isset($arr[$result])) {
-                return response()->json([
-                    'success' => true,
-                    'data' => ['indices' => [$arr[$result], $index]],
-                    'error' => null
-                ], 200);
+
+            for ($i = 0; $i < $total; $i++) {
+                for ($j = $i + 1; $j < $total; $j++) {
+                    
+                    if ($nums[$i] + $nums[$j] === $target) {
+                        return response()->json([
+                            'success' => true,
+                            'data'    => ['indices' => [$i, $j]],
+                            'error'   => null
+                        ], 200);
+                    }
+                }
             }
-            $arr[$num] = $index;
-        }
 
-        return response()->json([
-            'success' => false,
-            'data' => null,
-            'error' => 'No two numbers sum up to the target.'
-        ], 404);
-
-    }
-    catch (ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'error'   => 'Validation failed',
-            'details' => $e->errors()
-        ], 422);
-
-        }
-        catch (\Exception $e) {
             return response()->json([
                 'success' => false,
+                'data'    => null,
+                'error'   => 'No two numbers add up to the target'
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
+                'error'   => $e->getMessage(),
+            ], 422);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data'    => null,
                 'error'   => $e->getMessage()
-            ], 400);
+            ], 500);
         }
     }
-
-
-
 }
+
