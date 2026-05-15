@@ -817,5 +817,66 @@ class ArtWorkController extends Controller
         }
     }
 
+    public function exercise13(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'input'              => 'required|array',
+                'input.guest'        => 'required|array',
+                'input.user'         => 'required|array',
+                'input.guest.*.id'   => 'required|integer|min:1',
+                'input.guest.*.qty'  => 'required|integer|min:0',
+                'input.user.*.id'    => 'required|integer|min:1',
+                'input.user.*.qty'   => 'required|integer|min:0',
+            ]);
+
+            $guestCart = $validated['input']['guest'];
+            $userCart  = $validated['input']['user'];
+
+            $cartArray = [];
+
+            foreach ($guestCart as $item) {
+                $cartArray[$item['id']] = [
+                    'id'  => (int)$item['id'],
+                    'qty' => (int)$item['qty']
+                ];
+            }
+
+            foreach ($userCart as $item) {
+                $id = $item['id'];
+                if (isset($cartArray[$id])) {
+                    $cartArray[$id]['qty'] += (int)$item['qty'];
+                } else {
+                    $cartArray[$id] = [
+                        'id'  => (int)$id,
+                        'qty' => (int)$item['qty']
+                    ];
+                }
+            }
+
+            $mergedCart = array_values($cartArray);
+            usort($mergedCart, fn($a, $b) => $a['id'] <=> $b['id']);
+
+            return response()->json([
+                'success'    => true,
+                'data' => ['merge' => $mergedCart]
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Validation failed',
+                'details' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage()
+            ], 400);
+        }
+    }
+
+
 
 }
